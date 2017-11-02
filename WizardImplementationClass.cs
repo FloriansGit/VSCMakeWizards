@@ -37,6 +37,22 @@ namespace VSCMakeWizards
         {
         }
 
+        private void AddTemplate(string srcPath, 
+            string destPath, 
+            Dictionary<string, string> replacementsDictionary)
+        {
+            if (File.Exists(srcPath))
+            {
+                // see https://stackoverflow.com/questions/1231768/c-sharp-string-replace-with-dictionary
+                Regex re = new Regex(@"(\$\w+\$)", RegexOptions.Compiled);
+
+                string input = File.ReadAllText(srcPath);
+                string output = re.Replace(input, match => replacementsDictionary[match.Groups[1].Value]);
+
+                File.WriteAllText(destPath, output);
+            }
+        }
+
         public void RunStarted(object automationObject,
             Dictionary<string, string> replacementsDictionary,
             WizardRunKind runKind, object[] customParams)
@@ -53,15 +69,23 @@ namespace VSCMakeWizards
                 solution.Close();
             }
 
-            File.Copy(Path.Combine(templatePath, "CMakeSettings.json"), Path.Combine(destinationDir, "CMakeSettings.json"));
-            File.Copy(Path.Combine(templatePath, "main.cpp"), Path.Combine(destinationDir, desiredNamespace + ".cpp"));
-
-            // see https://stackoverflow.com/questions/1231768/c-sharp-string-replace-with-dictionary
-            Regex re = new Regex(@"(\$\w+\$)", RegexOptions.Compiled);
-            string input = File.ReadAllText(Path.Combine(templatePath, "CMakeLists.txt"));
-            string output = re.Replace(input, match => replacementsDictionary[match.Groups[1].Value]);
-
-            File.WriteAllText(Path.Combine(destinationDir, "CMakeLists.txt"), output);
+            AddTemplate(Path.Combine(templatePath, "CMakeLists.txt"),
+                        Path.Combine(destinationDir, "CMakeLists.txt"),
+                        replacementsDictionary);
+            AddTemplate(Path.Combine(templatePath, "CMakeSettings.json"), 
+                        Path.Combine(destinationDir, "CMakeSettings.json"),
+                        replacementsDictionary);
+            // executable template
+            AddTemplate(Path.Combine(templatePath, "main.cpp"), 
+                        Path.Combine(destinationDir, desiredNamespace + ".cpp"),
+                        replacementsDictionary);
+            // library template
+            AddTemplate(Path.Combine(templatePath, "lib.cpp"),
+                        Path.Combine(destinationDir, desiredNamespace + ".cpp"),
+                        replacementsDictionary);
+            AddTemplate(Path.Combine(templatePath, "lib.h"),
+                        Path.Combine(destinationDir, desiredNamespace + ".h"),
+                        replacementsDictionary);
 
             var vsSolution = Package.GetGlobalService(typeof(SVsSolution)) as IVsSolution7;
 
