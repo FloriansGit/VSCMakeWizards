@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="VSCMakeWizards.e5ff2ecf-7e91-4ff0-a7d5-26e8f0b3dab9" Version="1.0.1.0" Language="en-US" Publisher="Florian" />
-        <DisplayName>CMake New Project Wizards</DisplayName>
-        <Description xml:space="preserve">This package adds New Project Wizards for a project with an initial CMake setup to start from</Description>
+        <Identity Id="VSCMaketWizards-e5ff2ecf-7e91-4ff0-a7d5-26e8f0b3dab9" Version="1.0.1.0" Language="en-US" Publisher="FloriansGit" />
+        <DisplayName>CMake Project Wizards</DisplayName>
+        <Description xml:space="preserve">This package adds CMake Project Wizards for an initial CMake setup to start from</Description>
         <MoreInfo>https://github.com/FloriansGit/VSCMakeWizards</MoreInfo>
         <License>LICENSE</License>
+        <Icon>VSCMakeWizards.png</Icon>
+        <Tags>cmake,project,wizard</Tags>
     </Metadata>
     <Installation AllUsers="true">
         <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0]" />
+        <InstallationTarget Version="[15.0,16.0)" Id="Microsoft.VisualStudio.Pro" />
+        <InstallationTarget Version="[15.0,16.0)" Id="Microsoft.VisualStudio.Enterprise" />
     </Installation>
     <Dependencies>
         <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />

@@ -54,6 +54,10 @@
     <Compile Include="WizardImplementationClass.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="VSCMakeWizards.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="key.snk" />
     <Content Include="ProjectTemplates\TemplateExecutable.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
