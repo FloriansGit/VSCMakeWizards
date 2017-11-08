@@ -1,86 +1,79 @@
-﻿// Based on https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-use-wizards-with-project-templates
-//      and https://stackoverflow.com/questions/3882764/issue-with-visual-studio-template-directory-creation
+﻿// <copyright file="WizardImplementationClass.cs" company="Florian">
+// Copyright (c) Florian. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+// </copyright>
+
+// Based on
+// https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-use-wizards-with-project-templates
+// https://stackoverflow.com/questions/3882764/issue-with-visual-studio-template-directory-creation
 
 namespace VSCMakeWizards
 {
     using System;
+    using System.Collections.Generic;
+    using System.IO;
+    using System.Text.RegularExpressions;
     using EnvDTE;
     using EnvDTE80;
     using Microsoft.VisualStudio.Shell;
     using Microsoft.VisualStudio.Shell.Interop;
     using Microsoft.VisualStudio.TemplateWizard;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Text.RegularExpressions;
 
-    public class WizardImplementation : IWizard
+    /// <summary>
+    /// Base class for the custom wizard implementation
+    /// </summary>
+    /// <seealso cref="Microsoft.VisualStudio.TemplateWizard.IWizard" />
+    public class WizardImplementationClass : IWizard
     {
-        // This method is called before opening any item that   
-        // has the OpenInEditor attribute.  
+        /// <summary>
+        /// Runs custom wizard logic before opening an item in the template.
+        /// </summary>
+        /// <param name="projectItem">The project item that will be opened.</param>
         public void BeforeOpeningFile(ProjectItem projectItem)
         {
         }
 
+        /// <summary>
+        /// Runs custom wizard logic when a project has finished generating.
+        /// </summary>
+        /// <param name="project">The project that finished generating.</param>
         public void ProjectFinishedGenerating(Project project)
         {
         }
 
-        // This method is only called for item templates,  
-        // not for project templates.  
-        public void ProjectItemFinishedGenerating(ProjectItem
-            projectItem)
+        /// <summary>
+        /// Runs custom wizard logic when a project item has finished generating.
+        /// </summary>
+        /// <param name="projectItem">The project item that finished generating.</param>
+        public void ProjectItemFinishedGenerating(ProjectItem projectItem)
         {
         }
 
-        // This method is called after the project is created.  
+        /// <summary>
+        /// Runs custom wizard logic when the wizard has completed all tasks.
+        /// </summary>
         public void RunFinished()
         {
         }
 
-        protected void AddTemplate(
-            string srcPath,
-            string destPath,
+        /// <summary>
+        /// Runs custom wizard logic at the beginning of a template wizard run.
+        /// </summary>
+        /// <param name="automationObject">The automation object being used by the template wizard.</param>
+        /// <param name="replacementsDictionary">The list of standard parameters to be replaced.</param>
+        /// <param name="runKind">A <see cref="T:Microsoft.VisualStudio.TemplateWizard.WizardRunKind" /> indicating the type of wizard run.</param>
+        /// <param name="customParams">The custom parameters with which to perform parameter replacement in the project.</param>
+        /// <exception cref="WizardCancelledException">This is used to cancel solution creation ("Open Folder" is used instead)</exception>
+        public void RunStarted(
+            object automationObject,
             Dictionary<string, string> replacementsDictionary,
-            bool bAppend = false)
-        {
-            if (File.Exists(srcPath))
-            {
-                // see https://stackoverflow.com/questions/1231768/c-sharp-string-replace-with-dictionary
-                Regex re = new Regex(@"(\$\w+\$)", RegexOptions.Compiled);
-
-                string input = File.ReadAllText(srcPath);
-                string output = re.Replace(input, match => replacementsDictionary[match.Groups[1].Value]);
-
-                // Don't overwrite
-                if (!File.Exists(destPath))
-                {
-                    File.WriteAllText(destPath, output);
-                }
-                else if (bAppend)
-                {
-                    File.AppendAllText(destPath, output);
-                }
-            }
-        }
-
-        protected virtual void AddCMakeCode(string templatePath,
-            Dictionary<string, string> replacementsDictionary)
-        {
-        }
-
-        protected virtual void AddSourceFiles(string templatePath,
-            Dictionary<string, string> replacementsDictionary)
-        {
-        }
-
-        public void RunStarted(object automationObject,
-            Dictionary<string, string> replacementsDictionary,
-            WizardRunKind runKind, object[] customParams)
+            WizardRunKind runKind,
+            object[] customParams)
         {
             var desiredNamespace = replacementsDictionary["$safeprojectname$"];
             var templatePath = Path.GetDirectoryName((string)customParams[0]);
 
-            if (replacementsDictionary["$exclusiveproject$"] == Boolean.TrueString)
+            if (replacementsDictionary["$exclusiveproject$"] == bool.TrueString)
             {
                 var dte = automationObject as DTE2;
                 var solution = dte.Solution as EnvDTE100.Solution4;
@@ -103,15 +96,17 @@ namespace VSCMakeWizards
                 replacementsDictionary["$specifiedsolutionname$"] = desiredNamespace;
             }
 
-            AddTemplate(Path.Combine(templatePath, "CMakeLists.txt"),
-                        Path.Combine(solutionDir, "CMakeLists.txt"),
-                        replacementsDictionary);
-            AddTemplate(Path.Combine(templatePath, "CMakeSettings.json"),
-                        Path.Combine(solutionDir, "CMakeSettings.json"),
-                        replacementsDictionary);
+            this.AddTemplate(
+                Path.Combine(templatePath, "CMakeLists.txt"),
+                Path.Combine(solutionDir, "CMakeLists.txt"),
+                replacementsDictionary);
+            this.AddTemplate(
+                Path.Combine(templatePath, "CMakeSettings.json"),
+                Path.Combine(solutionDir, "CMakeSettings.json"),
+                replacementsDictionary);
 
-            AddCMakeCode(templatePath, replacementsDictionary);
-            AddSourceFiles(templatePath, replacementsDictionary);
+            this.AddCMakeCode(templatePath, replacementsDictionary);
+            this.AddSourceFiles(templatePath, replacementsDictionary);
 
             var vsSolution = Package.GetGlobalService(typeof(SVsSolution)) as IVsSolution7;
 
@@ -123,103 +118,74 @@ namespace VSCMakeWizards
             throw new WizardCancelledException();
         }
 
-        // This method is only called for item templates,  
-        // not for project templates.  
+        /// <summary>
+        /// Indicates whether the specified project item should be added to the project.
+        /// </summary>
+        /// <param name="filePath">The path to the project item.</param>
+        /// <returns>
+        /// true if the project item should be added to the project; otherwise, false.
+        /// </returns>
         public bool ShouldAddProjectItem(string filePath)
         {
             return false;
         }
-    }
 
-    public class WizardImplementationExecutable : WizardImplementation
-    {
-        protected override void AddCMakeCode(string templatePath,
-            Dictionary<string, string> replacementsDictionary)
+        /// <summary>
+        /// Adds a template from the template file repository while replacing the keywords given in
+        /// the dictionary.
+        /// </summary>
+        /// <param name="srcPath">The source path.</param>
+        /// <param name="destPath">The dest path.</param>
+        /// <param name="replacementsDictionary">The replacements dictionary.</param>
+        /// <param name="append">
+        /// if set to <c>true</c> the source files content is appended to dest file.
+        /// </param>
+        protected void AddTemplate(
+            string srcPath,
+            string destPath,
+            Dictionary<string, string> replacementsDictionary,
+            bool append = false)
         {
-            var solutionDir = replacementsDictionary["$solutiondirectory$"];
-            var destinationDir = replacementsDictionary["$destinationdirectory$"];
-
-            if (destinationDir == solutionDir)
+            if (File.Exists(srcPath))
             {
-                AddTemplate(Path.Combine(templatePath, "AddExecutable.cmake"),
-                            Path.Combine(solutionDir, "CMakeLists.txt"),
-                            replacementsDictionary,
-                            true);
-            }
-            else
-            {
-                AddTemplate(Path.Combine(templatePath, "AddSubdirectory.cmake"),
-                            Path.Combine(solutionDir, "CMakeLists.txt"),
-                            replacementsDictionary,
-                            true);
-                AddTemplate(Path.Combine(templatePath, "AddExecutable.cmake"),
-                            Path.Combine(destinationDir, "CMakeLists.txt"),
-                            replacementsDictionary);
-            }
-        }
+                // see https://stackoverflow.com/questions/1231768/c-sharp-string-replace-with-dictionary
+                Regex re = new Regex(@"(\$\w+\$)", RegexOptions.Compiled);
 
-        protected override void AddSourceFiles(string templatePath,
-            Dictionary<string, string> replacementsDictionary)
-        {
-            var destinationDir = replacementsDictionary["$destinationdirectory$"];
-            var destinationDirSrc = Path.Combine(destinationDir, "src");
+                string input = File.ReadAllText(srcPath);
+                string output = re.Replace(input, match => replacementsDictionary[match.Groups[1].Value]);
 
-            Directory.CreateDirectory(destinationDirSrc);
-
-            var projectName = replacementsDictionary["$projectname$"];
-
-            AddTemplate(Path.Combine(templatePath, "main.cpp"),
-                        Path.Combine(destinationDirSrc, projectName + ".cpp"),
-                        replacementsDictionary);
-        }
-    }
-
-    public class WizardImplementationLibrary : WizardImplementation
-    {
-        protected override void AddCMakeCode(string templatePath,
-            Dictionary<string, string> replacementsDictionary)
-        {
-            var solutionDir = replacementsDictionary["$solutiondirectory$"];
-            var destinationDir = replacementsDictionary["$destinationdirectory$"];
-
-            if (destinationDir == solutionDir)
-            {
-                AddTemplate(Path.Combine(templatePath, "AddLibrary.cmake"),
-                            Path.Combine(solutionDir, "CMakeLists.txt"),
-                            replacementsDictionary,
-                            true);
-            }
-            else
-            {
-                AddTemplate(Path.Combine(templatePath, "AddSubdirectory.cmake"),
-                            Path.Combine(solutionDir, "CMakeLists.txt"),
-                            replacementsDictionary,
-                            true);
-                AddTemplate(Path.Combine(templatePath, "AddLibrary.cmake"),
-                            Path.Combine(destinationDir, "CMakeLists.txt"),
-                            replacementsDictionary);
+                // Don't overwrite
+                if (!File.Exists(destPath))
+                {
+                    File.WriteAllText(destPath, output);
+                }
+                else if (append)
+                {
+                    File.AppendAllText(destPath, output);
+                }
             }
         }
 
-        protected override void AddSourceFiles(string templatePath,
+        /// <summary>
+        /// Generates the templates CMake code.
+        /// </summary>
+        /// <param name="templatePath">The template path.</param>
+        /// <param name="replacementsDictionary">The replacements dictionary.</param>
+        protected virtual void AddCMakeCode(
+            string templatePath,
             Dictionary<string, string> replacementsDictionary)
         {
-            var destinationDir = replacementsDictionary["$destinationdirectory$"];
-            var destinationDirSrc = Path.Combine(destinationDir, "src");
-            var destinationDirInc = Path.Combine(destinationDir, "inc");
+        }
 
-            Directory.CreateDirectory(destinationDirSrc);
-            Directory.CreateDirectory(destinationDirInc);
-
-            var projectName = replacementsDictionary["$projectname$"];
-
-            // dont't overwrite
-            AddTemplate(Path.Combine(templatePath, "lib.cpp"),
-                        Path.Combine(destinationDirSrc, projectName + ".cpp"),
-                        replacementsDictionary);
-            AddTemplate(Path.Combine(templatePath, "lib.h"),
-                        Path.Combine(destinationDirInc, projectName + ".h"),
-                        replacementsDictionary);
+        /// <summary>
+        /// Generates the source files.
+        /// </summary>
+        /// <param name="templatePath">The template path.</param>
+        /// <param name="replacementsDictionary">The replacements dictionary.</param>
+        protected virtual void AddSourceFiles(
+            string templatePath,
+            Dictionary<string, string> replacementsDictionary)
+        {
         }
     }
 }
