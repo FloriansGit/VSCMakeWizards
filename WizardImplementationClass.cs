@@ -2,16 +2,16 @@
 // Copyright (c) Florian. All rights reserved.
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 // </copyright>
-
+//
 // Based on
 // https://docs.microsoft.com/en-us/visualstudio/extensibility/how-to-use-wizards-with-project-templates
 // https://stackoverflow.com/questions/3882764/issue-with-visual-studio-template-directory-creation
-
+//
 namespace VSCMakeWizards
 {
-    using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.IO.Abstractions;
     using System.Text.RegularExpressions;
     using EnvDTE;
     using EnvDTE80;
@@ -25,6 +25,23 @@ namespace VSCMakeWizards
     /// <seealso cref="Microsoft.VisualStudio.TemplateWizard.IWizard" />
     public class WizardImplementationClass : IWizard
     {
+        private readonly IFileSystem fileSystem;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WizardImplementationClass"/> class.
+        /// Create WizardImplementationClass with the given fileSystem implementation.
+        /// </summary>
+        /// <param name="fileSystem">The file system.</param>
+        public WizardImplementationClass(IFileSystem fileSystem) => this.fileSystem = fileSystem;
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WizardImplementationClass"/> class.
+        /// </summary>
+        public WizardImplementationClass()
+            : this(fileSystem: new FileSystem()) // use default implementation which calls System.IO
+        {
+        }
+
         /// <summary>
         /// Runs custom wizard logic before opening an item in the template.
         /// </summary>
@@ -70,10 +87,12 @@ namespace VSCMakeWizards
             WizardRunKind runKind,
             object[] customParams)
         {
-            var desiredNamespace = replacementsDictionary["$safeprojectname$"];
-            var templatePath = Path.GetDirectoryName((string)customParams[0]);
+            var desiredNamespace = replacementsDictionary.GetValueOrDefault("$safeprojectname$", "MyProject");
+            var templatePath = (customParams.GetLength(0) > 0) ? Path.GetDirectoryName((string)customParams[0]) : string.Empty;
 
-            if (replacementsDictionary["$exclusiveproject$"] == bool.TrueString)
+            if (automationObject != null &&
+                replacementsDictionary.ContainsKey("$exclusiveproject$") &&
+                replacementsDictionary["$exclusiveproject$"] == bool.TrueString)
             {
                 var dte = automationObject as DTE2;
                 var solution = dte.Solution as EnvDTE100.Solution4;
@@ -84,14 +103,10 @@ namespace VSCMakeWizards
                 }
             }
 
-            var solutionDir = replacementsDictionary["$solutiondirectory$"];
+            var solutionDir = replacementsDictionary.GetValueOrDefault("$solutiondirectory$", string.Empty);
 
             // If no solution name give, we take the project's safe name
-            if (!replacementsDictionary.ContainsKey("$specifiedsolutionname$"))
-            {
-                replacementsDictionary.Add("$specifiedsolutionname$", desiredNamespace);
-            }
-            else if (replacementsDictionary["$specifiedsolutionname$"] == string.Empty)
+            if (replacementsDictionary.GetValueOrDefault("$specifiedsolutionname$", string.Empty) == string.Empty)
             {
                 replacementsDictionary["$specifiedsolutionname$"] = desiredNamespace;
             }
@@ -146,22 +161,22 @@ namespace VSCMakeWizards
             Dictionary<string, string> replacementsDictionary,
             bool append = false)
         {
-            if (File.Exists(srcPath))
+            if (this.fileSystem.File.Exists(srcPath))
             {
                 // see https://stackoverflow.com/questions/1231768/c-sharp-string-replace-with-dictionary
                 Regex re = new Regex(@"(\$\w+\$)", RegexOptions.Compiled);
 
-                string input = File.ReadAllText(srcPath);
+                string input = this.fileSystem.File.ReadAllText(srcPath);
                 string output = re.Replace(input, match => replacementsDictionary[match.Groups[1].Value]);
 
                 // Don't overwrite
                 if (!File.Exists(destPath))
                 {
-                    File.WriteAllText(destPath, output);
+                    this.fileSystem.File.WriteAllText(destPath, output);
                 }
                 else if (append)
                 {
-                    File.AppendAllText(destPath, output);
+                    this.fileSystem.File.AppendAllText(destPath, output);
                 }
             }
         }

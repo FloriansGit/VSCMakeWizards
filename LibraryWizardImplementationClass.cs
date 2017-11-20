@@ -8,6 +8,7 @@ namespace VSCMakeWizards
     using System;
     using System.Collections.Generic;
     using System.IO;
+    using System.IO.Abstractions;
 
     /// <summary>
     /// Generate library project template wizard
@@ -15,6 +16,23 @@ namespace VSCMakeWizards
     /// <seealso cref="VSCMakeWizards.WizardImplementationClass" />
     public class LibraryWizardImplementationClass : WizardImplementationClass
     {
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LibraryWizardImplementationClass"/> class.
+        /// </summary>
+        /// <param name="fileSystem">The file system.</param>
+        public LibraryWizardImplementationClass(IFileSystem fileSystem)
+            : base(fileSystem)
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="LibraryWizardImplementationClass"/> class.
+        /// </summary>
+        public LibraryWizardImplementationClass()
+            : this(fileSystem: new FileSystem()) // use default implementation which calls System.IO
+        {
+        }
+
         /// <inheritdoc/>
         protected override void AddCMakeCode(
             string templatePath,
