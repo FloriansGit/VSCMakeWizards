@@ -78,7 +78,6 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
-    <None Include="Settings\packages.config" />
     <None Include="Settings\source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
