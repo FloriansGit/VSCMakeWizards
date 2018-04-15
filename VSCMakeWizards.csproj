@@ -65,6 +65,10 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include="packages.config" />
+    <Content Include="ProjectTemplates\TemplateExecutableCLang.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <IncludeInVSIX>true</IncludeInVSIX>
+    </Content>
     <None Include="Resources\key.snk" />
     <Content Include="ProjectTemplates\TemplateExecutable.zip">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
