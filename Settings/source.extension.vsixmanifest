@@ -6,7 +6,7 @@
         <Description xml:space="preserve">This package adds CMake Project Wizards for an initial CMake setup to start from</Description>
         <MoreInfo>https://github.com/FloriansGit/VSCMakeWizards</MoreInfo>
         <License>LICENSE</License>
-        <Icon>VSCMakeWizards.png</Icon>
+        <Icon>Resources\VSCMakeWizards.png</Icon>
         <Tags>C++, clang, CMake, Project Template ,Templates, Wizard</Tags>
     </Metadata>
     <Installation AllUsers="true">
@@ -21,6 +21,7 @@
         <Asset Type="Microsoft.VisualStudio.ProjectTemplate" d:Source="File" Path="ProjectTemplates" d:TargetPath="ProjectTemplates\TemplateExecutable.zip" TargetVersion="" />
         <Asset Type="Microsoft.VisualStudio.Assembly" d:Source="Project" d:ProjectName="%CurrentProject%" TargetVersion="" Path="|%CurrentProject%|" AssemblyName="|%CurrentProject%;AssemblyName|" />
         <Asset Type="Microsoft.VisualStudio.ProjectTemplate" d:Source="File" Path="ProjectTemplates" d:TargetPath="ProjectTemplates\TemplateLibrary.zip" />
+        <Asset Type="Microsoft.VisualStudio.ProjectTemplate" d:Source="File" Path="ProjectTemplates" d:TargetPath="ProjectTemplates\TemplateExecutableCLang.zip" />
     </Assets>
     <Prerequisites>
         <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
